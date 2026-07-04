@@ -1,150 +1,111 @@
-const express = require('express');
+const express = require("express");
+const bodyParser = require("body-parser");
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-const htmlContent = `
-<!DOCTYPE html>
-<html lang="ta">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>S.M.S Bill - Premium</title>
-    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiUy5NLlMgQmlsbCBQcmVtaXVtIiwic2hvcnRfbmFtZSI6IlNNUyBCaWxsIiwic3RhcnRfdXJsIjoiLyIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiMwZjE3MmEiLCJ0aGVtZV9jb2xvciI6IiNmNTliMGIifQ==">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Poppins', sans-serif; background: #0f172a; color: #e2e8f0; padding: 10px; }
-        .container { max-width: 500px; margin: 0 auto; background: #1e293b; border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        h1 { text-align: center; color: #f59e0b; margin-bottom: 5px; font-weight: 700; }
-        h1 span { font-size: 12px; color: #64748b; display: block; }
-        label { display: block; margin: 12px 0 5px; font-size: 14px; color: #94a3b8; }
-        input { width: 100%; padding: 12px; border: 1px solid #334155; background: #0f172a; color: #fff; border-radius: 8px; font-size: 16px; }
-        table { width: 100%; margin: 15px 0; border-collapse: collapse; }
-        th { background: #334155; padding: 10px; font-size: 12px; text-align: left; }
-        td { padding: 8px 4px; }
-        td input { padding: 8px; font-size: 14px; }
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; }
-        .btn-add { background: #334155; color: #fff; }
-        .btn-wa { background: #25D366; color: #000; }
-        .btn-sms { background: #3b82f6; color: #fff; }
-        .total-box { background: #0f172a; padding: 15px; border-radius: 8px; margin-top: 15px; }
-        .total-row { display: flex; justify-content: space-between; margin: 8px 0; align-items: center; }
-        .grand { font-size: 20px; font-weight: 700; color: #f59e0b; }
-        .del-btn { background: #ef4444; color: white; border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>S.M.S <span>Premium Bill</span></h1>
-        
-        <label>வாடிக்கையாளர் பெயர்</label>
-        <input type="text" id="customerName" placeholder="பெயர்">
-        
-        <label>வாடிக்கையாளர் WhatsApp நம்பர்</label>
-        <input type="tel" id="customerPhone" placeholder="9876543210">
-        
-        <table id="itemsTable">
-            <thead>
-                <tr><th>பொருள்</th><th>எண்</th><th>விலை</th><th></th></tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-        
-        <button class="btn btn-add" onclick="addItem()">+ பொருள் சேர்க்க</button>
-        
-        <div class="total-box">
-            <div class="total-row">
-                <span>Sub Total</span>
-                <span id="subTotal">₹0.00</span>
-            </div>
-            <div class="total-row">
-                <span>Advance</span>
-                <input type="number" id="advance" value="0" oninput="calculateTotal()" style="width:100px; text-align:right; padding:6px;">
-            </div>
-            <div class="total-row grand">
-                <span>Balance</span>
-                <span id="grandTotal">₹0.00</span>
-            </div>
-        </div>
-        
-        <button class="btn btn-wa" onclick="sendToWhatsApp()">WhatsApp க்கு அனுப்பு</button>
-        <button class="btn btn-sms" onclick="sendToSMS()">SMS அனுப்பு</button>
-    </div>
+const items = [
+    { id: 1, name: "50 படி வட்டகை" },
+    { id: 2, name: "40 படி வட்டகை" },
+    { id: 3, name: "35 படி வட்டகை" },
+    { id: 4, name: "30 படி வட்டகை" },
+    { id: 5, name: "25 படி வட்டகை" },
+    { id: 6, name: "20 படி வட்டகை" },
+    { id: 7, name: "15 படி வட்டகை" },
+    { id: 8, name: "10 படி வட்டகை" },
+    { id: 9, name: "7 படி வட்டகை" },
+    { id: 10, name: "5 படி வட்டகை" },
+    { id: 11, name: "அல்வா குருப்பி" },
+    { id: 12, name: "இரும்புக்கரண்டி" },
+    { id: 13, name: "பால் கரண்டி" },
+    { id: 14, name: "சில்வர் வாளி" },
+    { id: 15, name: "சில்வர் கரண்டி" },
+    { id: 16, name: "அன்ன கரண்டி" },
+    { id: 17, name: "அன்ன பேஷன்" },
+    { id: 18, name: "அன்னகுண்டா" },
+    { id: 19, name: "அன்னவெட்டி" },
+    { id: 20, name: "தண்ணீர் கேத்தல்" },
+    { id: 21, name: "கை கப்பு" },
+    { id: 22, name: "வடைச்சட்டி" },
+    { id: 23, name: "சாரணி" },
+    { id: 24, name: "இட்லி கொப்பரை" },
+    { id: 25, name: "அரிவாள்மனை" },
+    { id: 26, name: "தேங்காய் துருவி" },
+    { id: 27, name: "டீ, காபி & கேன்" },
+    { id: 28, name: "கேஸ் அடுப்பு டபுள்" },
+    { id: 29, name: "சிங்கிள் அடுப்பு" },
+    { id: 30, name: "3 பர்னர் அடுப்பு" },
+    { id: 31, name: "4 பர்னர் அடுப்பு" },
+    { id: 32, name: "தோசைக்கல் அடுப்பு" },
+    { id: 33, name: "சில்வர் அண்டா" },
+    { id: 34, name: "தண்ணீர் டிரம்" },
+    { id: 35, name: "பந்திப்பாய்" },
+    { id: 36, name: "ஐமுக்காளம்" },
+    { id: 37, name: "டேபிள், சேர்" },
+    { id: 38, name: "கைப்பிடி சேர்" },
+    { id: 39, name: "வி.ஐ.பி சேர்" },
+    { id: 40, name: "பன்னீர் கைச்செம்பு" },
+    { id: 41, name: "பனியார சட்டி" },
+    { id: 42, name: "ஃபோன்" },
+    { id: 43, name: "கிரைண்டர்" },
+    { id: 44, name: "மிக்சி" },
+    { id: 45, name: "தேங்காய் திருகி மிஷின்" },
+    { id: 46, name: "சாமியானா பந்தல்" },
+    { id: 47, name: "வண்டி வாடகை" },
+    { id: 48, name: "ஏத்து கூலி, இறக்கு கூலி" }
+];
 
-<script>
-    function addItem() {
-        const tbody = document.querySelector('#itemsTable tbody');
-        const row = document.createElement('tr');
-        row.innerHTML = \`
-            <td><input type="text" class="item-name" placeholder="பொருள் பெயர்" oninput="calculateTotal()"></td>
-            <td><input type="number" class="item-qty" value="1" oninput="calculateTotal()"></td>
-            <td><input type="number" class="item-rate" placeholder="0" oninput="calculateTotal()"></td>
-            <td><button class="del-btn" onclick="this.parentElement.parentElement.remove(); calculateTotal();">X</button></td>
-        \`;
-        tbody.appendChild(row);
-    }
-
-    function calculateTotal() {
-        let subTotal = 0;
-        document.querySelectorAll('#itemsTable tbody tr').forEach(row => {
-            const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-            const rate = parseFloat(row.querySelector('.item-rate').value) || 0;
-            subTotal += qty * rate;
-        });
-        const advance = parseFloat(document.getElementById('advance').value) || 0;
-        document.getElementById('subTotal').innerText = '₹' + subTotal.toFixed(2);
-        document.getElementById('grandTotal').innerText = '₹' + (subTotal - advance).toFixed(2);
-    }
-
-    function getBillMessage() {
-        const name = document.getElementById('customerName').value || 'Customer';
-        let itemList = '';
-        let subTotal = 0;
-        document.querySelectorAll('#itemsTable tbody tr').forEach((row, i) => {
-            const itemName = row.querySelector('.item-name').value;
-            const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-            const rate = parseFloat(row.querySelector('.item-rate').value) || 0;
-            const total = qty * rate;
-            if(itemName && qty > 0) {
-                itemList += \`\${i + 1}. \${itemName}\\n   \${qty} x ₹\${rate} = ₹\${total.toFixed(2)}\\n\`;
-                subTotal += total;
+app.get("/manifest.json", (req, res) => {
+    res.json({
+        "name": "S.M.S பில் Software",
+        "short_name": "SMS Bill",
+        "start_url": "/",
+        "display": "standalone",
+        "background_color": "#ffffff",
+        "theme_color": "#000000",
+        "description": "S.M.S. பந்தல் & பாத்திர வாடகை பில்",
+        "icons": [
+            {
+                "src": "https://cdn-icons-png.flaticon.com/512/2910/2910791.png",
+                "sizes": "192x192",
+                "type": "image/png"
+            },
+            {
+                "src": "https://cdn-icons-png.flaticon.com/512/2910/2910791.png",
+                "sizes": "512x512",
+                "type": "image/png"
             }
-        });
-        if (!itemList) { alert('குறைந்தது 1 Item சேர்க்கணும்'); return null; }
-        
-        const advance = parseFloat(document.getElementById('advance').value) || 0;
-        const grandTotal = subTotal - advance;
-        const date = new Date().toLocaleDateString('en-IN');
-        
-        return { text: \`*S.M.S Premium Bill* 🧾\\n\\n*Date:* \${date}\\n*Customer:* \${name}\\n\\n*Order Details:*\\n\${itemList}\\n*Sub Total:* ₹\${subTotal.toFixed(2)}\\n*Advance:* ₹\${advance.toFixed(2)}\\n*Balance Due:* ₹\${grandTotal.toFixed(2)}\\n\\nOrder க்கு நன்றி! 🙏\\nS.M.S\`, phone: document.getElementById('customerPhone').value };
+        ]
+    });
+});
+
+app.get("/", (req, res) => {
+    const billNo = Date.now().toString().slice(-6);
+    const today = new Date().toLocaleDateString("ta-IN");
+
+    let itemRows = "";
+    for (let i = 0; i < items.length; i++) {
+        itemRows += '<tr><td>' + items[i].id + '</td><td style="text-align: left; padding-left: 8px;">' + items[i].name + '</td><td><input type="number" name="qty_' + items[i].id + '" min="0" class="qty"></td><td><input type="number" name="rate_' + items[i].id + '" min="0" class="rate"></td><td><input type="number" name="total_' + items[i].id + '" class="total" readonly></td></tr>';
     }
 
-    function sendToWhatsApp() {
-        const bill = getBillMessage();
-        if (!bill) return;
-        const waLink = bill.phone ? \`https://wa.me/91\${bill.phone}?text=\${encodeURIComponent(bill.text)}\` : \`https://wa.me/?text=\${encodeURIComponent(bill.text)}\`;
-        window.location.href = waLink;
-    }
+    const html = '<!DOCTYPE html><html lang="ta"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>S.M.S. பந்தல் & சமையல் பாத்திர வாடகை கடை</title><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#000000"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><style>body{font-family:Latha,Noto Sans Tamil,sans-serif;padding:10px;font-size:14px}.bill-container{border:2px solid black;padding:10px;max-width:800px;margin:auto}.header{text-align:center;border-bottom:1px solid black;padding-bottom:5px}.header h1{margin:5px;font-size:18px}.header p{margin:2px;font-size:11px}.info{display:flex;justify-content:space-between;margin:8px 0;font-weight:bold}table{width:100%;border-collapse:collapse;margin-top:5px}th,td{border:1px solid black;padding:3px;text-align:center}th{background:#f2f2f2;font-size:12px}td{font-size:12px}input{width:95%;border:none;text-align:center;font-family:inherit;font-size:12px;background:transparent}input:focus{outline:1px solid blue;background:#ffffe0}.footer{margin-top:10px;display:flex;justify-content:space-between}.footer-left{width:50%}.footer-left input{border-bottom:1px dotted black;text-align:left}.total-box{width:45%;font-weight:bold}.total-box div{margin:5px 0;display:flex;justify-content:space-between;align-items:center}.total-box input{width:100px;border:1px solid black;font-weight:bold}.btn-group{text-align:center;margin-top:15px}.btn-group button{padding:10px 20px;font-size:16px;margin:5px;cursor:pointer;border:none;border-radius:4px}.whatsapp{background:#25D366;color:white}.sms{background:#3b82f6;color:white}@media print{button,.no-print{display:none}body{padding:0}.bill-container{border:none}input{border:none}}</style></head><body><div class="bill-container"><form action="/bill" method="POST" id="billForm"><div class="header"><div style="display:flex;justify-content:space-between;font-size:11px;"><span>M.செல்வமணி</span><span>98655 53074<br>97517 53074</span></div><h1>S.M.S. பந்தல் & சமையல் பாத்திர வாடகை கடை</h1><p>தெற்கு தெரு. காளியம்மன் கோவில் அருகில், திருவேடகம் - 625 234, மதுரை மாவட்டம்</p></div><div class="info"><div>திரு. <input type="text" name="customer_name" id="customer_name" style="width:250px;" required></div><div>எண் : ' + billNo + ' <br> தேதி : ' + today + '</div></div><table><thead><tr><th>வ.எண்</th><th>பொருள் விபரம்</th><th>எண்ணிக்கை</th><th>ரூ.</th><th>மொத்தம்</th></tr></thead><tbody>' + itemRows + '</tbody></table><div class="footer"><div class="footer-left">பார்ட்டி பெயர் : <input type="text" name="party_name" id="party_name"><br><br>மண்டபம் வீடு : <input type="text" name="mandapam" id="mandapam"><br><br>செல் நம்பர் : <input type="text" name="phone" id="phone" placeholder="9876543210"><br><br></div><div class="total-box"><div>மொத்தம் : <input type="number" name="grand_total" id="grand_total" readonly></div><div>முன்பணம் : <input type="number" name="advance" id="advance"></div><div>பாக்கி : <input type="number" name="balance" id="balance" readonly></div><div style="margin-top:20px;text-align:center;font-weight:normal;">பார்ட்டி கையொப்பம்</div></div></div><div class="btn-group no-print"><button type="submit">பில் சேமிக்க & அச்சிடுக</button><button type="button" class="whatsapp" onclick="shareWhatsApp()">WhatsApp க்கு அனுப்பு</button><button type="button" class="sms" onclick="sendSMS()">SMS அனுப்பு</button></div><input type="hidden" name="bill_no" value="' + billNo + '"><input type="hidden" name="bill_date" value="' + today + '"></form></div><script>function calculateTotal(){let grandTotal=0;document.querySelectorAll(".qty").forEach((qtyInput,i)=>{let qty=parseFloat(qtyInput.value)||0;let rate=parseFloat(document.querySelectorAll(".rate")[i].value)||0;let total=qty*rate;document.querySelectorAll(".total")[i].value=total?total.toFixed(2):"";if(qty>0)grandTotal+=total});document.getElementById("grand_total").value=grandTotal?grandTotal.toFixed(2):"";let advance=parseFloat(document.getElementById("advance").value)||0;let balance=grandTotal-advance;document.getElementById("balance").value=balance?balance.toFixed(2):""}document.querySelectorAll(".qty,.rate, #advance").forEach(input=>{input.addEventListener("input",calculateTotal)});calculateTotal();function getBillData(){let customer=document.getElementById("customer_name").value.trim();let phone=document.getElementById("phone").value.trim().replace(/[^0-9]/g,"");let party=document.getElementById("party_name").value;let mandapam=document.getElementById("mandapam").value;let grand=document.getElementById("grand_total").value||0;let advance=document.getElementById("advance").value||0;let balance=document.getElementById("balance").value||0;let billNo=document.querySelector(\'input[name="bill_no"]\').value;let billDate=document.querySelector(\'input[name="bill_date"]\').value;if(!customer){alert("திரு. பெயர் எழுதுங்க டா");return null}let itemsText="";document.querySelectorAll(".qty").forEach((qtyInput,i)=>{let qty=parseFloat(qtyInput.value)||0;if(qty>0){let name=document.querySelectorAll("tbody tr")[i].children[1].innerText;let rate=document.querySelectorAll(".rate")[i].value;let total=document.querySelectorAll(".total")[i].value;itemsText+=name+" - "+qty+" x ₹"+rate+" = ₹"+total+"%0A"}});if(!itemsText){alert("ஒரு Item க்காவது Qty போடு டா");return null}return{customer,phone,party,mandapam,grand,advance,balance,billNo,billDate,itemsText}}function shareWhatsApp(){let data=getBillData();if(!data)return;let message="*S.M.S. பந்தல் & பாத்திர வாடகை கடை*%0A%0A*பில் எண்:* "+data.billNo+"%0A*தேதி:* "+data.billDate+"%0A*திரு:* "+data.customer+"%0A*பார்ட்டி:* "+data.party+"%0A*மண்டபம்:* "+data.mandapam+"%0A%0A*பொருட்கள்:*%0A"+data.itemsText+"%0A*மொத்தம்:* ₹"+data.grand+"%0A*முன்பணம்:* ₹"+data.advance+"%0A*பாக்கி:* ₹"+data.balance+"%0A%0Aநன்றி! 🙏%0A98655 53074";let waLink=data.phone?"https://wa.me/91"+data.phone+"?text="+message:"https://wa.me/?text="+message;window.open(waLink,"_blank")}function sendSMS(){let data=getBillData();if(!data)return;if(!data.phone){alert("Customer Phone Number போடு டா");return}let smsText="S.M.S Bill No:"+data.billNo+"%0ACustomer: "+data.customer+"%0ABalance Due: Rs."+data.balance+"%0AThank you! 9865553074";let smsLink="sms:91"+data.phone+"?body="+smsText;window.location.href=smsLink}</script></body></html>';
 
-    function sendToSMS() {
-        const bill = getBillMessage();
-        if (!bill) return;
-        const smsLink = bill.phone ? \`sms:91\${bill.phone}?body=\${encodeURIComponent(bill.text)}\` : \`sms:?body=\${encodeURIComponent(bill.text)}\`;
-        window.location.href = smsLink;
-    }
+    res.send(html);
+});
 
-    addItem(); calculateTotal();
-</script>
-</body>
-</html>
-`;
+app.post("/bill", (req, res) => {
+    const billData = req.body;
+    const billNo = req.body.bill_no;
 
-app.get('/', (req, res) => {
-    res.send(htmlContent);
+    console.log("New Bill:", billNo, billData.customer_name);
+
+    const successHtml = '<div style="font-family:Latha,sans-serif;text-align:center;padding:50px;"><h2>பில் Ready!</h2><p>பில் எண்: ' + billNo + '</p><button onclick="window.print()" style="padding:10px 20px;font-size:16px;cursor:pointer;">அச்சிடுக / PDF Save பண்ணு</button><br><br><a href="/" style="font-size:16px;">புதிய பில் போட</a></div>';
+
+    res.send(successHtml);
 });
 
 app.listen(PORT, () => {
-    console.log(`S.M.S சர்வர் ஓடுகிறது Port: ${PORT}`);
+    console.log("S.M.S சர்வர் ஓடுகிறது Port: " + PORT);
 });
